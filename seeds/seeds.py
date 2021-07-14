@@ -31,22 +31,36 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 # System messages
-ES_SELECT_OPTION_MSG = "Seleccione una opción:\n 1) Configuración.\n 2) Ayuda.\n 3) Salir.\n"
+ES_SELECT_OPTION_MSG = "Seleccione una opción:\n 0) Salir.\n 1) Configuración.\n 2) Ayuda.\n"
 ES_CONFIGURATION_MSG = "Para configurar la herramienta siga los pasos.\n"
 ES_LOGIN_NAME_LINKEDIN_MSG = "Indique su nombre de usuario de LinkedIn:"
 ES_LOGIN_PASSWORD_LINKEDIN_MSG = "Indique su contraseña de LinkedIn:"
 ES_SELECT_TWEEPY_FILE_MSG = "Seleccione el directorio donde se encuentra la configuración de Tweepy.\nPara usar la configuración por defecto, pulse ENTER:"
-
-ES_SEARCH_USER_MSG = "Nombre de la persona a buscar en LinkedIn:\n"
-ES_USER_PROFILE_MSG = "Nombre el identificador de LinkedIn:\n"
+ES_SELECT_LINKEDIN_OPTION_MSG = "Seleccione una opción:\n 0) Salir.\n 1) Buscar en LinkedIn.\n 2) Obtener información de una persona en LinkedIn.\n 3) Buscar en Twitter.\n 4) Obtener información de una persona en Twitter.\n 5) Ayuda.\n"
+ES_SEARCH_LINKEDIN_USER_MSG = "Nombre de la persona a buscar en LinkedIn:"
+ES_LINKEDIN_USER_PROFILE_MSG = "Nombre o identificador(URN) de LinkedIn:"
+ES_SEARCH_TWITTER_USER_MSG = "Nombre de la persona a buscar en Twitter:"
+ES_SEARCH_TWITTER_PROFILE_MSG = "Identificador de la persona en Twitter:"
 
 # System error messages
 ES_ERROR_LOGIN_MSG = "Ouch! El nombre de usuario o contraseña no es válido!"
-ES_ERROR_CONFIG_FILE_MSG = "Ouch! No se encuentra el fichero de configuración de Tweepy o su formato no es el correcto.\n"
+ES_ERROR_CONFIG_FILE_MSG = "Ouch! No se encuentra el fichero de configuración de Tweepy o su formato no es el correcto.\nSaliendo...\n"
+ES_ERROR_CONFIG_FILE_FORMAT_MSG = "Ouch! Formato del fichero de configuración de Twitter no es el correcto.\nSaliendo...\n"
 
 # Constants
 DEFAULT_TWEEPY_CONFIG = "tweepy.conf"
 
+def login_to_linkedin(username, password):
+	"""
+	TODO: Comment
+	"""
+	try:
+		linkedin_api = Linkedin(username, password)
+	except Exception:
+		print(bcolors.FAIL, ES_ERROR_LOGIN_MSG, bcolors.ENDC)
+		exit()
+
+	return linkedin_api
 
 def read_tweepy_config_file(filename=DEFAULT_TWEEPY_CONFIG):
 	"""
@@ -89,47 +103,63 @@ def read_tweepy_config_file(filename=DEFAULT_TWEEPY_CONFIG):
 
 	try:
 		f.readline() # header line. not usefull
+		# important! last line should be empty.
 		tweepy_config = {
-			"api_key": f.readline().split('=')[1],
-			"api_secret_key": f.readline().split('=')[1],
-			"access_token": f.readline().split('=')[1],
-			"access_token_secret": f.readline().split('=')[1]
+			"api_key": f.readline().split('=')[1][:-1],
+			"api_secret_key": f.readline().split('=')[1][:-1],
+			"access_token": f.readline().split('=')[1][:-1],
+			"access_token_secret": f.readline().split('=')[1][:-1]
 		}
 	except Exception as e:
 		f.close()
-		print(bcolors.FAIL, ES_ERROR_CONFIG_FILE_MSG, bcolors.ENDC)
+		print(bcolors.FAIL, ES_ERROR_CONFIG_FILE_FORMAT_MSG, bcolors.ENDC)
 		exit()
 
 	f.close()
 	return tweepy_config
 
+def login_to_twitter(tweepy_config):
+	"""
+	TODO: Comment
+	"""
+	auth = tweepy.OAuthHandler(tweepy_config["api_key"], tweepy_config["api_secret_key"])
+	auth.set_access_token(tweepy_config["access_token"], tweepy_config["access_token_secret"])
+	print(tweepy_config)
+	twitter_api = tweepy.API(auth)
+	return twitter_api
+
+# Asks for an user. Returns all the coincidences.
+def search_linkedin_user(search_string):
+	people = linkedin_api.search_people(search_string)
+	print_json(people, 2)
+
+# Based on one of the previous results shows the information of an user.
+def get_linkedin_user(user):
+    user = linkedin_api.get_profile(user)
+    print_json(user, 2)     
+            
+# Prints JSON data formating it using the <tabs> numbers of spaces.
+def print_json(data, tabs):
+    print(json.dumps(data, indent=tabs))
 
 
 # Application menu
+"""
+TODO: Comment
+"""
 while True:
 	decision = input(ES_SELECT_OPTION_MSG)
-	if decision == "3":
+	if decision == "0":
 		exit()
 	elif decision == "1":
 		print(ES_CONFIGURATION_MSG)
-		# TODO: define a function that authenticates the user in both networks
-		# Access to the LinkedIn-Api
 		# Prompts for username and password to login into LinkedIn
-		# WARNING! Remove user/pass
 		username = input(ES_LOGIN_NAME_LINKEDIN_MSG)
 		password = input(ES_LOGIN_PASSWORD_LINKEDIN_MSG)
 
-		try:
-			linkedin_api = Linkedin(username, password)
-		except Exception:
-			print(bcolors.FAIL, ES_ERROR_LOGIN_MSG, bcolors.ENDC)
-			exit()
+		# Access to the LinkedIn-Api. In case of error exits.
+		linkedin_api = login_to_linkedin(username, password)
 
-		# User logged succesfuly
-		print(linkedin_api)
-
-
-		# Access to Tweepy
 		# Read Tweepy OAuth tokens from configuration file.
 		filename = input(ES_SELECT_TWEEPY_FILE_MSG)
 		if (filename == ""):
@@ -137,15 +167,46 @@ while True:
 		else:
 			tweepy_config = read_tweepy_config_file(filename)
 
-		auth = tweepy.OAuthHandler(tweepy_config["api_key"], tweepy_config["api_secret_key"])
-		auth.set_access_token(tweepy_config["access_token"], tweepy_config["access_token_secret"])
-
-		# TODO: Handle error
-		twitter_api = tweepy.API(auth)
-		print(twitter_api)
+		# Access to Tweepy
+		twitter_api = login_to_twitter(tweepy_config)
 		break
 	elif decision == "2":
 		# TODO: Print help
 		pass
 
-print("continuamos por aqui mañana...")
+
+# User search...
+"""
+TODO: Comment
+"""
+while True:
+	decision = input(ES_SELECT_LINKEDIN_OPTION_MSG)
+	if decision == "0":
+		print("ciao");
+		exit()
+	elif decision == "1":
+		linkedin_search_string = input(ES_SEARCH_LINKEDIN_USER_MSG)    
+		search_linkedin_user(linkedin_search_string)
+	elif decision == "2":
+		linkedin_user = input(ES_LINKEDIN_USER_PROFILE_MSG)
+		get_linkedin_user(linkedin_user)
+	elif decision == "3":
+		twitter_search_string = input(ES_SEARCH_TWITTER_USER_MSG)
+		users = twitter_api.search_users(twitter_search_string)
+		for user in users:
+			print(user.screen_name)
+	elif decision == "4":
+		twitter_name = input(ES_SEARCH_TWITTER_PROFILE_MSG)
+		print_json(twitter_api.get_user(twitter_name)._json, 2)
+
+
+
+
+
+
+
+
+
+
+
+
