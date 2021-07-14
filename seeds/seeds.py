@@ -1,7 +1,6 @@
 from linkedin_api import Linkedin
 import tweepy
 import json
-import sys
 
 print("         #o#")
 print("       ####o#")
@@ -41,6 +40,7 @@ ES_SEARCH_LINKEDIN_USER_MSG = "Nombre de la persona a buscar en LinkedIn:"
 ES_LINKEDIN_USER_PROFILE_MSG = "Nombre o identificador(URN) de LinkedIn:"
 ES_SEARCH_TWITTER_USER_MSG = "Nombre de la persona a buscar en Twitter:"
 ES_SEARCH_TWITTER_PROFILE_MSG = "Identificador de la persona en Twitter:"
+ES_CLOSE_MSG = "\nLimpiando la casa...\n Hasta la proxima!"
 
 # System error messages
 ES_ERROR_LOGIN_MSG = "Ouch! El nombre de usuario o contraseña no es válido!"
@@ -52,7 +52,20 @@ DEFAULT_TWEEPY_CONFIG = "tweepy.conf"
 
 def login_to_linkedin(username, password):
 	"""
-	TODO: Comment
+	Registers an user with the linkedin-api.
+	In case of error shows a message and exit.
+
+	Parameters
+	----------
+	username: str
+		Valid username registered in LinkedIn.
+	password: str
+		User password.
+
+	Returns
+	-------
+	Linkedin
+		A Linkedin object authenticated to perform request to the API. 
 	"""
 	try:
 		linkedin_api = Linkedin(username, password)
@@ -124,23 +137,31 @@ def login_to_twitter(tweepy_config):
 	"""
 	auth = tweepy.OAuthHandler(tweepy_config["api_key"], tweepy_config["api_secret_key"])
 	auth.set_access_token(tweepy_config["access_token"], tweepy_config["access_token_secret"])
-	print(tweepy_config)
 	twitter_api = tweepy.API(auth)
 	return twitter_api
 
 # Asks for an user. Returns all the coincidences.
 def search_linkedin_user(search_string):
+	"""
+	TODO: Comment
+	"""
 	people = linkedin_api.search_people(search_string)
 	print_json(people, 2)
 
 # Based on one of the previous results shows the information of an user.
 def get_linkedin_user(user):
-    user = linkedin_api.get_profile(user)
-    print_json(user, 2)     
+	"""
+	TODO: Comment
+	"""
+	user = linkedin_api.get_profile(user)
+	print_json(user, 2)     
             
 # Prints JSON data formating it using the <tabs> numbers of spaces.
 def print_json(data, tabs):
-    print(json.dumps(data, indent=tabs))
+	"""
+	TODO: Comment
+	"""
+	print(json.dumps(data, indent=tabs))
 
 
 # Application menu
@@ -150,7 +171,7 @@ TODO: Comment
 while True:
 	decision = input(ES_SELECT_OPTION_MSG)
 	if decision == "0":
-		exit()
+		exit(ES_CLOSE_MSG)
 	elif decision == "1":
 		print(ES_CONFIGURATION_MSG)
 		# Prompts for username and password to login into LinkedIn
@@ -182,8 +203,7 @@ TODO: Comment
 while True:
 	decision = input(ES_SELECT_LINKEDIN_OPTION_MSG)
 	if decision == "0":
-		print("ciao");
-		exit()
+		exit(ES_CLOSE_MSG)
 	elif decision == "1":
 		linkedin_search_string = input(ES_SEARCH_LINKEDIN_USER_MSG)    
 		search_linkedin_user(linkedin_search_string)
@@ -198,15 +218,27 @@ while True:
 	elif decision == "4":
 		twitter_name = input(ES_SEARCH_TWITTER_PROFILE_MSG)
 		print_json(twitter_api.get_user(twitter_name)._json, 2)
+	#elif decision == "5":
+	#	print("Próximamente...\n")
+	# 	# TODO
+	# 	linkedin_search_string = input(ES_SEARCH_LINKEDIN_USER_MSG)
+	# 	twitter_search_string = input(ES_SEARCH_TWITTER_USER_MSG)
+	# 	users = linkedin_api.search_people(linkedin_search_string, network_depth='10')
+	# 	userdata = {}
+	# 	animation = "|/-\\"
+	# 	idx = 0
+	# 	for user in users:
+	# 		userdata.update(linkedin_api.get_profile(user["urn_id"]))
+	# 		print("Por favor espere: " + animation[idx % len(animation)], end="\r")
+	# 		idx += 1
+	# 		#time.sleep(0.1)
 
+	# 	print_json(userdata, 2)
+	# 	df = pd.DataFrame(userdata)
+	# 	df.to_excel('./DATAFILE.xlsx')
 
-
-
-
-
-
-
-
-
+	elif decision == "5":
+		# TODO: Print help
+		pass
 
 
