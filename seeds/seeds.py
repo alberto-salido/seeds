@@ -1,5 +1,5 @@
 from linkedin_api import Linkedin
-
+import tweepy
 import json
 import sys
 
@@ -13,16 +13,12 @@ print("        ,'  `          |___/|___||___||__/ |___/ ")
 print("-------------------------------------------------------")
 print("Social engEEring and Data extraction in Social networks")
 print("-------------------------------------------------------")
-print("Alberto Salido")
-print("     July 2021\n\n")
+print("                                         Alberto Salido")
+print("                                  alberto.026@gmail.com")
+print("                                              July 2021")
+print("-------------------------------------------------------")
 
-ES_LOGIN_NAME = "Indique su nombre de usuario de LinkedIn:"
-ES_LOGIN_PASSWORD = "Indique su contraseña de LinkedIn:"
-
-ES_SEARCH_USER_MSG = "Nombre de la persona a buscar en LinkedIn:\n"
-ES_USER_PROFILE_MSG = "Nombre el identificador de LinkedIn:\n"
-ES_SELECT_OPTION_MSG = "Selecciona una opción:\n 1) Buscar usuarios en Linkedin.\n 2) Obtener información de un usuario.\n 0) Salir.\n"
-
+# Text colors
 class bcolors:
     PURPLE = '\033[95m'
     OKBLUE = '\033[94m'
@@ -34,24 +30,61 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-ES_ERROR_LOGIN = "Ouch! El nombre de usuario o contraseña no es válido!"
+# System messages
+ES_SELECT_OPTION_MSG = "Seleccione una opción:\n 1) Configuración.\n 2) Ayuda.\n 3) Salir.\n"
+ES_CONFIGURATION_MSG = "Para configurar la herramienta siga los pasos.\n"
+ES_LOGIN_NAME_LINKEDIN_MSG = "Indique su nombre de usuario de LinkedIn:"
+ES_LOGIN_PASSWORD_LINKEDIN_MSG = "Indique su contraseña de LinkedIn:"
 
-# Prompts for username and password to login into LinkedIn
-username = input(ES_LOGIN_NAME)
-password = input(ES_LOGIN_PASSWORD)
+ES_SEARCH_USER_MSG = "Nombre de la persona a buscar en LinkedIn:\n"
+ES_USER_PROFILE_MSG = "Nombre el identificador de LinkedIn:\n"
 
-# Access to the LinkedIn-Api
-try:
-	api = Linkedin(username, password)
-except Exception:
-	print(bcolors.FAIL, ES_ERROR_LOGIN, bcolors.ENDC)
-	exit()
-
-# User logged succesfuly
-print(api)
+# System error messages
+ES_ERROR_LOGIN_MSG = "Ouch! El nombre de usuario o contraseña no es válido!"
 
 
+# Application menu
+while True:
+	decision = input(ES_SELECT_OPTION_MSG)
+	if decision == "3":
+		exit()
+	elif decision == "1":
+		print(ES_CONFIGURATION_MSG)
+		# TODO define a function that authenticates the user in both networks
+		# Access to the LinkedIn-Api
+		# Prompts for username and password to login into LinkedIn
+		# WARNING! Remove user/pass
+		username = input(ES_LOGIN_NAME_LINKEDIN_MSG)
+		password = input(ES_LOGIN_PASSWORD_LINKEDIN_MSG)
 
-  
+		try:
+			linkedin_api = Linkedin(username, password)
+		except Exception:
+			print(bcolors.FAIL, ES_ERROR_LOGIN_MSG, bcolors.ENDC)
+			exit()
+
+		# User logged succesfuly
+		print(linkedin_api)
 
 
+		#Access to Tweepy
+
+		# Tweepy OAuth tokens 
+		# TODO: Read from configuration file.
+		api_key = ''
+		api_secret_key = ''
+		access_token = ''
+		access_token_secret = ''
+
+		auth = tweepy.OAuthHandler(api_key, api_secret_key)
+		auth.set_access_token(access_token, access_token_secret)
+
+		# TODO: Handle error
+		twitter_api = tweepy.API(auth)
+		print(twitter_api)
+		break
+	elif decision == "2":
+		# TODO Print help
+		pass
+
+print("continuamos por aqui mañana...")
