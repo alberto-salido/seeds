@@ -133,35 +133,109 @@ def read_tweepy_config_file(filename=DEFAULT_TWEEPY_CONFIG):
 
 def login_to_twitter(tweepy_config):
 	"""
-	TODO: Comment
+	Based on a dictionary with the four primary parameters, creates a OAuthHandler
+	to autenticate in the Twitter Api using OAuth.
+
+	Parameters
+	----------
+	tweepy_config: dictionary with the following format:
+		tweepy_config = {
+			"api_key": f.readline().split('=')[1][:-1],
+			"api_secret_key": f.readline().split('=')[1][:-1],
+			"access_token": f.readline().split('=')[1][:-1],
+			"access_token_secret": f.readline().split('=')[1][:-1]
+		}
+
+	Returns
+	-------
+	A Tweepy Object to interact with the Twitter API.
+
 	"""
 	auth = tweepy.OAuthHandler(tweepy_config["api_key"], tweepy_config["api_secret_key"])
 	auth.set_access_token(tweepy_config["access_token"], tweepy_config["access_token_secret"])
 	twitter_api = tweepy.API(auth)
 	return twitter_api
 
-# Asks for an user. Returns all the coincidences.
 def search_linkedin_user(search_string):
 	"""
-	TODO: Comment
+	Search for an user in LinkedIn.
+	Results are similar to search in the website.
+	Shows the information represented as JSON.
+
+	Paramters
+	---------
+	search_string: str
+		Search string used for the search.
+		Could be a name, name and surname or whatever.
+
+	Returns
+	-------
+	JSON
+		A JSON object printed with the following information for each user found:
+		- urn_id: Private identificator
+		- distance: Distance form the person that makes de query to this user.
+					SELF - Yourself or person that makes the query.
+					DISTANCE_2 - Distance from the users registered.
+					DISTANCE_3 - Distance from the users registered.
+					OUT_OF_NETWORK - Is not in your network
+		- public_id : Public identifier of the user. This can be found in the 
+			LinkedIn side (URL).
 	"""
-	people = linkedin_api.search_people(search_string)
+	people = linkedin_api.search_people(search_string, include_private_profiles=True)
 	print_json(people, 2)
 
-# Based on one of the previous results shows the information of an user.
 def get_linkedin_user(user):
 	"""
-	TODO: Comment
+	Retrieves all information from LinkedIn for an user.
+	Shows the information represented as JSON.
+
+	Parameters
+	----------
+	user: str
+		User name (public_id or URN_Id) of the user to search.
+
+	Returns
+	-------
+	JSON
+		A JSON object printed with the whole information about an user.
 	"""
 	user = linkedin_api.get_profile(user)
 	print_json(user, 2)     
-            
-# Prints JSON data formating it using the <tabs> numbers of spaces.
+ 
+def search_twitter_users(search_string):
+	"""
+	Search for users in Twitter based on a string passed.
+	This search works similar as the Find function from Twitter website.
+
+	Parameters
+	----------
+	search_string: str
+		Search string used for the search.
+		Could be a name, name and surname or whatever.
+
+	Returns
+	-------
+	str
+		String with the following format: "@twitter_username - user_surname"
+	"""
+	users = twitter_api.search_users(twitter_search_string)
+	for user in users:
+			print("@" + user.screen_name + " - " + user.name)
+
 def print_json(data, tabs):
 	"""
-	TODO: Comment
+	Prints JSON data formating it using the <tabs> numbers of spaces.
+
+	Parameters
+	----------
+	data: JSON
+		JSON data to be formated and printed.
+
+	tabs: integer
+		Number of spaces.
+
 	"""
-	print(json.dumps(data, indent=tabs))
+	print(json.dumps(data, indent=tabs, ensure_ascii=False))
 
 
 # Application menu
@@ -177,24 +251,20 @@ while True:
 		# Prompts for username and password to login into LinkedIn
 		username = input(ES_LOGIN_NAME_LINKEDIN_MSG)
 		password = input(ES_LOGIN_PASSWORD_LINKEDIN_MSG)
-
 		# Access to the LinkedIn-Api. In case of error exits.
 		linkedin_api = login_to_linkedin(username, password)
-
 		# Read Tweepy OAuth tokens from configuration file.
 		filename = input(ES_SELECT_TWEEPY_FILE_MSG)
 		if (filename == ""):
 			tweepy_config = read_tweepy_config_file()
 		else:
 			tweepy_config = read_tweepy_config_file(filename)
-
 		# Access to Tweepy
 		twitter_api = login_to_twitter(tweepy_config)
 		break
 	elif decision == "2":
 		# TODO: Print help
 		pass
-
 
 # User search...
 """
@@ -205,38 +275,21 @@ while True:
 	if decision == "0":
 		exit(ES_CLOSE_MSG)
 	elif decision == "1":
-		linkedin_search_string = input(ES_SEARCH_LINKEDIN_USER_MSG)    
+		linkedin_search_string = input(ES_SEARCH_LINKEDIN_USER_MSG)
 		search_linkedin_user(linkedin_search_string)
+		linkedin_search_string = ""
 	elif decision == "2":
 		linkedin_user = input(ES_LINKEDIN_USER_PROFILE_MSG)
 		get_linkedin_user(linkedin_user)
 	elif decision == "3":
 		twitter_search_string = input(ES_SEARCH_TWITTER_USER_MSG)
-		users = twitter_api.search_users(twitter_search_string)
-		for user in users:
-			print(user.screen_name)
+		search_twitter_users(twitter_search_string)
+		# users = twitter_api.search_users(twitter_search_string)
+		# for user in users:
+		# 	print("@" + user.screen_name + " - " + user.name)
 	elif decision == "4":
 		twitter_name = input(ES_SEARCH_TWITTER_PROFILE_MSG)
 		print_json(twitter_api.get_user(twitter_name)._json, 2)
-	#elif decision == "5":
-	#	print("Próximamente...\n")
-	# 	# TODO
-	# 	linkedin_search_string = input(ES_SEARCH_LINKEDIN_USER_MSG)
-	# 	twitter_search_string = input(ES_SEARCH_TWITTER_USER_MSG)
-	# 	users = linkedin_api.search_people(linkedin_search_string, network_depth='10')
-	# 	userdata = {}
-	# 	animation = "|/-\\"
-	# 	idx = 0
-	# 	for user in users:
-	# 		userdata.update(linkedin_api.get_profile(user["urn_id"]))
-	# 		print("Por favor espere: " + animation[idx % len(animation)], end="\r")
-	# 		idx += 1
-	# 		#time.sleep(0.1)
-
-	# 	print_json(userdata, 2)
-	# 	df = pd.DataFrame(userdata)
-	# 	df.to_excel('./DATAFILE.xlsx')
-
 	elif decision == "5":
 		# TODO: Print help
 		pass
